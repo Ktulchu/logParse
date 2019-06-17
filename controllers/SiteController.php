@@ -10,34 +10,12 @@ use yii\filters\VerbFilter;
 use app\models\LoginForm;
 use app\models\ContactForm;
 
+use app\models\Logsparse;
+use app\models\Logsearch;
+
 class SiteController extends Controller
 {
-    /**
-     * {@inheritdoc}
-     */
-    public function behaviors()
-    {
-        return [
-            'access' => [
-                'class' => AccessControl::className(),
-                'only' => ['logout'],
-                'rules' => [
-                    [
-                        'actions' => ['logout'],
-                        'allow' => true,
-                        'roles' => ['@'],
-                    ],
-                ],
-            ],
-            'verbs' => [
-                'class' => VerbFilter::className(),
-                'actions' => [
-                    'logout' => ['post'],
-                ],
-            ],
-        ];
-    }
-
+    
     /**
      * {@inheritdoc}
      */
@@ -61,7 +39,21 @@ class SiteController extends Controller
      */
     public function actionIndex()
     {
-        return $this->render('index');
+		$model = new Logsearch();
+				
+		$total = $model->getLog();
+		
+		
+		if(Yii::$app->request->isAjax)
+		{
+			$model->range = Yii::$app->request->get('range');
+			\Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+			
+			return $model->getChart();
+		}
+		
+		
+		return $this->render('index', ['total' => $total]);
     }
 
     /**
