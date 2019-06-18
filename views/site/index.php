@@ -1,38 +1,40 @@
 <?php
 use yii\helpers\Url;
+use yii\bootstrap\ActiveForm;
 /* @var $this yii\web\View */
 
 $this->title = 'My Yii Application';
 ?>
 <div class="site-index">
   <legend>Фильтр</legend>
-  <div class="row">
-	<div class="col-md-4">
-	  
-	</div>
-	<div class="col-md-4">
-
-	</div>
-	<div class="col-md-4">
-
-	</div>
-  </div>
-	
-  <div class="row">
+  <?php $form = ActiveForm::begin(['id' => 'filter-form']); ?>
+    <div class="row" style="margin-bottom:50px">
+	  <div class="col-md-3">
+	    <?php echo $form->field($model, 'datestart')->widget(\yii\jui\DatePicker::class, [
+			'language' => 'ru',
+			'dateFormat' => 'yyyy-MM-dd',
+		]) ?>
+	  </div>
+	  <div class="col-md-3">
+		<?php echo$form->field($model, 'range')->dropDownList(['week' => 'С начала недели', 'month' => 'С начала месяца', 'year' => 'С начала года'])->label('Интервал'); ?>
+	  </div>
+	  <div class="col-md-3">
+		<?php echo$form->field($model, 'os')->dropDownList($model->getOs())->label('Операционная система'); ?>
+	  </div>
+	  <div class="col-md-3">
+		<?php echo$form->field($model, 'architecture')->dropDownList($model->getArchitecture())->label('Архитектура'); ?>
+	  </div>
+    </div>
+  <?php ActiveForm::end(); ?>
+  <div class="row" style="margin-bottom:50px">
 	  <div class="col-md-6">
-	    <legend style="position:relative">Число запросов 
-		  <a href="#" class="dropdown-toggle pull-right" data-toggle="dropdown"><i class="fa fa-calendar"></i> <i class="caret"></i></a>
-		  <ul id="range" class="dropdown-menu dropdown-menu-right">
-			<li><a href="day">День</a></li>
-			<li class="active"><a href="week">Неделя</a></li>
-			<li><a href="month">Месяц</a></li>
-			<li><a href="year">Год</a></li>
-		  </ul>
+	    <legend style="position:relative">Число запросов 	  
 		</legend>
-		<div id="chart-sale" style="width: 100%; height: 260px;"></div>
+		<div id="chart-request" style="width: 100%; height: 260px;"></div>
 	  </div>
 	  <div class="col-md-6">
 	    <legend>ТОП 3 запросов</legend>
+		<div id="chart-total" style="width: 100%; height: 260px;"></div>
 	  </div>
   </div>
 
@@ -65,13 +67,12 @@ $this->title = 'My Yii Application';
 <?php
 $url = Url::to(['index']);
 $indexjs = <<< JS
-  $('#range a').on('click', function(e) {
-	  e.preventDefault();
-	  $(this).parent().parent().find('li').removeClass('active');
-	  $(this).parent().addClass('active');
+  function Aply() {		
 	  $.ajax({
 		  type: 'get',
-		  url: '$url?range=' + $(this).attr('href'),
+		  url: '$url',
+		  data: $('#filter-form').serialize(),
+		  type: 'POST',
 		  dataType: 'json',
 		  success: function(json) {
 			  if (typeof json['urls'] == 'undefined') { return false; }
@@ -97,16 +98,21 @@ $indexjs = <<< JS
 				}
 			}
 			
-			$.plot('#chart-sale', [json['urls'], json['populars']], option);
+			$.plot('#chart-request', [json['urls'], json['populars']], option);
+			$.plot('#chart-total', [json['urls'], json['totals']], option);
 			
 		  },
 			error: function(xhr, ajaxOptions, thrownError) {
            alert(thrownError);
         }
 	  });
+  };
+  
+  $('select, input').on('change', function(){ 
+	Aply();
   });
   
-  $('#range .active a').trigger('click');
+  Aply();
 JS;
 $this->registerJs($indexjs, yii\web\View::POS_READY);
 $this->registerJsFile('/js/jquery/flot/jquery.flot.js',   ['depends' => [\yii\web\JqueryAsset::className()]]);
