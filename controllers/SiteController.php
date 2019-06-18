@@ -40,20 +40,24 @@ class SiteController extends Controller
     public function actionIndex()
     {
 		$model = new Logsearch();
-				
-		$total = $model->getLog();
-		
+
 		
 		if(Yii::$app->request->isAjax)
 		{
-			$model->range = Yii::$app->request->get('range');
+						
+			$model->load(Yii::$app->request->post());
+			
 			\Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 			
-			return $model->getChart();
+			$json['chart'] = $model->getChart();
+			$json['body'] = $this->renderajax('tbody', ['total' => $json['chart']['data']]);
+			
+			return $json;
 		}
 		
-		
-		return $this->render('index', ['total' => $total]);
+		$model->datestart = Logsparse::getMinDate();
+
+		return $this->render('index', ['model' => $model]);
     }
 
     /**
@@ -100,7 +104,6 @@ class SiteController extends Controller
         $model = new ContactForm();
         if ($model->load(Yii::$app->request->post()) && $model->contact(Yii::$app->params['adminEmail'])) {
             Yii::$app->session->setFlash('contactFormSubmitted');
-
             return $this->refresh();
         }
         return $this->render('contact', [

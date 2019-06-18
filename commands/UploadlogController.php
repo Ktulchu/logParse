@@ -55,12 +55,14 @@ class UploadlogController extends Controller
 			) continue;
 		  
 			preg_match_all($pattern, $line, $result);
-		  		  
+		  	
+			if(!$result[1][0] || !$result[8][0]) continue;
+			
 			if(!$os = $this->GetOS($result [13][0])) continue;
 
 			$insert[] = [
 				'ip' => $result [1][0],
-				'date' =>  date('Y-m-d H:i:s',  strtotime(str_replace('/', '-', $result[4][0]) . $result[5][0])),
+				'date' =>  date('Y-m-d H:i:s',  strtotime(str_replace('/', '-', $result[4][0]))), //$result[5][0] time visit
 				'url' => $result [8][0],
 				'agent' => $result [13][0],
 				'os' => $os,
@@ -75,7 +77,7 @@ class UploadlogController extends Controller
 		$columns = array('ip', 'date', 'url', 'agent', 'os', 'brous', 'architecture');
 		Yii::$app->db->createCommand()->batchInsert('logsparse', $columns, $insert)->execute();
 		
-		echo "Импорт успешно завершен"; 
+		echo "Импорт успешно завершен \n"; 
 		return ExitCode::OK;
     }
 	

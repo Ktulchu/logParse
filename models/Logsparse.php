@@ -38,4 +38,14 @@ class  Logsparse extends \yii\db\ActiveRecord
         ];
     }
 	
+	public static function getMinDate()
+	{
+		return self::find()->min('date');
+	}
+	
+	public static function getMaxDate()
+	{
+		return self::find()->max('date');
+	}
+	
 }

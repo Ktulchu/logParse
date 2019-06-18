@@ -33,31 +33,24 @@ $this->title = 'My Yii Application';
 		<div id="chart-request" style="width: 100%; height: 260px;"></div>
 	  </div>
 	  <div class="col-md-6">
-	    <legend>ТОП 3 запросов</legend>
+	    <legend>Доля трех самых популярных браузеров</legend>
 		<div id="chart-total" style="width: 100%; height: 260px;"></div>
 	  </div>
   </div>
 
   <div class="body-content">
 	<legend>Запрсы к сайту</legend>
-	<table class="table">
+	<table id="table" class="table table-border sortable">
 	  <thead>
 	    <tr>
-		  <td>Дата</td>
-		  <td>Число запрсов за день</td>
-		  <td>Популярный запрс</td>
-		  <td>Популярный браузер</td>
+		  <th class="datesort">Дата</th>
+		  <th class="recwestsort">Число запрсов за день</th>
+		  <th class="urltsort">Популярный запрс</th>
+		  <th class="broustsort">Популярный браузер</th>
 		</tr>
 	  </thead>
-	  <tbody>
-	    <?php foreach($total as $key => $col) : ?>
-		  <tr>
-		    <td><?php echo $key; ?></td>
-			<td><?php echo $col['total_requests']; ?></td>
-			<td><?php echo $col['total_url']; ?></td>
-			<td><?php echo $col['total_brous']; ?></td>
-		  </tr>
-		<?php endforeach; ?>
+	  <tbody id="tbody">
+
 	  </tbody>
 	</table>
   </div>
@@ -75,7 +68,7 @@ $indexjs = <<< JS
 		  type: 'POST',
 		  dataType: 'json',
 		  success: function(json) {
-			  if (typeof json['urls'] == 'undefined') { return false; }
+			  if (typeof json['chart']['urls'] == 'undefined') { return false; }
 			  
 			  var option = {	
 				shadowSize: 0,
@@ -94,13 +87,13 @@ $indexjs = <<< JS
 				},
 				xaxis: {
 					show: true,
-            		ticks: json['xaxis']
+            		ticks: json['chart']['xaxis']
 				}
 			}
 			
-			$.plot('#chart-request', [json['urls'], json['populars']], option);
-			$.plot('#chart-total', [json['urls'], json['totals']], option);
-			
+			$.plot('#chart-request', [json['chart']['urls'], json['chart']['populars']], option);
+			$.plot('#chart-total', [json['chart']['brous'], json['chart']['totals']], option);
+			$('#tbody').html(json['body']);
 		  },
 			error: function(xhr, ajaxOptions, thrownError) {
            alert(thrownError);
@@ -111,10 +104,96 @@ $indexjs = <<< JS
   $('select, input').on('change', function(){ 
 	Aply();
   });
-  
   Aply();
+   
+  function sort_rows(id, data, dir, type) {
+	var tbl=document.getElementById(id);
+	var tbodies=tbl.getElementsByTagName('tbody');
+	var tmp_trs=tbodies[0].getElementsByTagName('tr');
+	
+	var all_trs=new Array();
+	var tmp;
+
+	for (var i=0; i<tmp_trs.length; i++) {
+		tmp=tmp_trs[i].getAttribute('data-'+data);
+		if (tmp) {
+			tmp_trs[i].sort_value=type(tmp);
+			all_trs.push(tmp_trs[i]);
+		}
+	}
+	 
+
+	all_trs.sort(function(a,b) {
+		if (a.sort_value==b.sort_value) {
+			return 0;
+		}
+		else {
+			return (a.sort_value>b.sort_value?1:-1);
+		}
+	});
+	 
+	if (dir) {
+		all_trs.reverse();
+	}
+	 
+	var current_row;
+	var last_row=null;
+	for (i=all_trs.length-1; i>0; i--) {
+		all_trs[i].parentNode.insertBefore(all_trs[i],last_row);
+		last_row=all_trs[i];
+	}
+  }
+  $(".datesort").on('click', function(){
+	if($('th').hasClass('desc')){
+		$('th').removeClass('desc').removeClass('asc')
+		$(this).addClass('asc');
+		sort_rows('table','date',true,String);
+	} else {
+		$('th').removeClass('desc').removeClass('asc')
+		sort_rows('table','date',false,String);
+		$(this).addClass('desc');
+	}
+  })
+  
+  $(".recwestsort").on('click', function(){
+	if($('th').hasClass('desc')){
+		$('th').removeClass('desc').removeClass('asc')
+		$(this).addClass('asc');
+		sort_rows('table','requests',false,String);
+	} else {
+		$('th').removeClass('desc').removeClass('asc')
+		sort_rows('table','requests',true,Number);
+		$(this).addClass('desc');
+	}
+  })
+  
+  $(".urltsort").on('click', function(){
+	if($('th').hasClass('desc')){
+		$('th').removeClass('desc').removeClass('asc')
+		$(this).addClass('asc');
+		sort_rows('table','url',false,String);
+	} else {
+		$('th').removeClass('desc').removeClass('asc')
+		sort_rows('table','url',true,String);
+		$(this).addClass('desc');
+	}
+  })
+  
+  $(".broustsort").on('click', function(){
+	if($('th').hasClass('desc')){
+		$('th').removeClass('desc').removeClass('asc')
+		$(this).addClass('asc');
+		sort_rows('table','brous',false,String);
+	} else {
+		$('th').removeClass('desc').removeClass('asc')
+		sort_rows('table','brous',true,String);
+		$(this).addClass('desc');
+	}
+  })
+	
 JS;
 $this->registerJs($indexjs, yii\web\View::POS_READY);
 $this->registerJsFile('/js/jquery/flot/jquery.flot.js',   ['depends' => [\yii\web\JqueryAsset::className()]]);
 $this->registerJsFile('/js/jquery/flot/jquery.flot.resize.min.js',   ['depends' => [\yii\web\JqueryAsset::className()]]);
+
 ?>
