@@ -16,7 +16,7 @@ $this->title = 'My Yii Application';
 		]) ?>
 	  </div>
 	  <div class="col-md-3">
-		<?php echo$form->field($model, 'range')->dropDownList(['week' => 'С начала недели', 'month' => 'С начала месяца', 'year' => 'С начала года'])->label('Интервал'); ?>
+		<?php echo$form->field($model, 'range')->dropDownList(['week' => 'До конца недели', 'month' => 'До конца месяца', 'year' => 'До конца года'])->label('Интервал'); ?>
 	  </div>
 	  <div class="col-md-3">
 		<?php echo$form->field($model, 'os')->dropDownList($model->getOs())->label('Операционная система'); ?>
